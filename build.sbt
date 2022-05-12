@@ -4,6 +4,10 @@ ThisBuild / scalaVersion := "2.13.8"
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
+lazy val startupTransition: State => State = { s: State =>
+  "conventionalCommits" :: s
+}
+
 lazy val root = project
   .in(file("."))
   .settings(
@@ -14,4 +18,7 @@ lazy val root = project
       "org.apache.spark" %% "spark-core" % "3.2.1",
       "org.apache.spark" %% "spark-sql" % "3.2.1",
     ),
+    Global / onLoad := {
+      startupTransition compose (Global / onLoad).value
+    },
   )
