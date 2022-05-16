@@ -9,6 +9,6 @@ then
 fi
 
 sbt +assembly
-sbt +remoteDeploy "aws"
-ssh -i "$1"/bigdata.pem hadoop@"$2" -L 20888:"$2":20888
-xdg-open localhost:20888
+sbt "remoteDeploy aws"
+ssh -i "$1"/bigdata.pem -fL 20888:"$2":20888 hadoop@"$2" sleep 60 &
+ssh -i "$1"/bigdata.pem -fL 18080:"$2":18080 hadoop@"$2" sleep 60 &
