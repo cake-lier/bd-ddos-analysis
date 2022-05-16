@@ -21,4 +21,21 @@ lazy val root = project
     Global / onLoad := {
       startupTransition compose (Global / onLoad).value
     },
+    remoteDeployConfFiles := Seq("aws_config.conf"),
+    remoteDeployArtifacts := Seq(
+      (Compile / packageBin).value.getParentFile / (assembly / assemblyJarName).value -> "main.jar",
+    ),
+    remoteDeployAfterHooks := Seq(sshClient => {
+      sshClient
+        .exec("spark-submit main.jar")
+        .foreach(r =>
+          println(
+            s"""
+            |Exit code: ${r.exitCode}
+            |Stdout: ${r.stdOutAsString()}
+            |Stderr: ${r.stdErrAsString()}
+            |""".stripMargin,
+          ),
+        )
+    }),
   )
