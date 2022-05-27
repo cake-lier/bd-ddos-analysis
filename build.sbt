@@ -8,12 +8,17 @@ lazy val startupTransition: State => State = { s: State =>
   "conventionalCommits" :: s
 }
 
+val localDeploy = taskKey[Unit]("Run application on local machine")
+
 lazy val root = project
   .in(file("."))
   .enablePlugins(RemoteDeployPlugin)
   .settings(
     name := "bd-ddos-analysis",
     idePackagePrefix := Some("it.unibo.bd"),
+    scalacOptions ++= Seq(
+      "-language:higherKinds",
+    ),
     assembly / mainClass := Some("it.unibo.bd.Main"),
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-core" % "3.2.1" % Provided,
@@ -35,9 +40,20 @@ lazy val root = project
             + "--executor-cores 3 "
             + "--executor-memory 8G "
             + "--conf spark.dynamicAllocation.enabled=false "
-            + "main.jar"
+            + "main.jar "
+            + "true "
             + "unibo-bd2122-xxx/yyy",
         )
         .foreach(r => println(r.stdOutAsString()))
     }),
+    localDeploy := {
+      import scala.sys.process._
+      (
+        "spark-submit "
+          + "--class it.unibo.bd.Main "
+          + "--master local[*] "
+          + s"${(Compile / packageBin).value.getParentFile / (assembly / assemblyJarName).value} "
+          + "false"
+      ).!<
+    },
   )
