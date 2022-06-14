@@ -1,25 +1,21 @@
 package it.unibo.bd
 
+import it.unibo.bd.utils.Utils.RichRDD
 import org.apache.spark.{ SparkConf, SparkContext }
-import org.apache.spark.sql.SparkSession
 
 object Merge extends App {
   val sc = new SparkContext(new SparkConf().setAppName("Merge"))
-
-  val spark = SparkSession
-    .builder()
-    .appName("Spark SQL basic example")
-    .getOrCreate()
-
   println(s"Application started at http://localhost:20888/proxy/${sc.applicationId}/\n")
 
-  val unbalancedDataset = spark.read.option("header", value = true).csv(s"s3://${args(0)}/unbalaced_20_80_dataset.csv")
-  val balancedDataset = spark.read.csv(s"s3://${args(0)}/final_dataset.csv")
+  val unbalancedDatasetURL = s"s3://${args(0)}/unbalaced_20_80_dataset.csv"
+  val unbalancedDataset = sc.textFile(unbalancedDatasetURL)
 
-  val unionDataset = balancedDataset.union(unbalancedDataset)
+  val balancedDatasetURL = s"s3://${args(0)}/final_dataset.csv"
+  val balancedDataset = sc.textFile(balancedDatasetURL)
 
-  unionDataset.coalesce(1).write.option("header", value = true).csv(s"s3://${args(0)}/ddos-dataset.csv")
+  val totalDataset = unbalancedDataset.skip(1) ++ balancedDataset.skip(1)
+  totalDataset.coalesce(1).saveAsTextFile(s"s3://${args(0)}/ddos-dataset.csv")
 
-  val sampledDataset = unionDataset.sample(withReplacement = false, 0.001)
-  sampledDataset.coalesce(1).write.option("header", value = true).csv(s"s3://${args(0)}/ddos-dataset-sample.csv")
+  val sampledDataset = totalDataset.sample(withReplacement = false, 0.001)
+  sampledDataset.coalesce(1).saveAsTextFile(s"s3://${args(0)}/ddos-dataset-sampled.csv")
 }

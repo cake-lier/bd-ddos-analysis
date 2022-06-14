@@ -6,6 +6,10 @@ import java.time.LocalDateTime
 import java.time.format.{ DateTimeFormatter, DateTimeParseException }
 import scala.util.Try
 
+sealed trait NetworkProtocol
+case object TCP extends NetworkProtocol
+case object UDP extends NetworkProtocol
+
 case class Connection(
     index: Long,
     flowId: String,
@@ -13,7 +17,7 @@ case class Connection(
     sourcePort: Long,
     destinationIP: InetAddress,
     destinationPort: Long,
-    protocol: Int,
+    protocol: NetworkProtocol,
     timestamp: LocalDateTime,
     isDDoS: Boolean,
 )
@@ -28,7 +32,7 @@ object Connection {
       sourcePort <- Try(r(3).toLong)
       destinationIP <- Try(InetAddress.getByName(r(4)))
       destinationPort <- Try(r(5).toLong)
-      protocol <- Try(r(6).toInt)
+      protocol <- Try(r(6).toInt).map(c => if (c == 6) TCP else UDP)
       timestamp <-
         Try {
           LocalDateTime.parse(r(7), DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm:ss a"))
@@ -47,4 +51,15 @@ object Connection {
       timestamp,
       isDDoS,
     )).toOption
+}
+
+case class PortDescription(port: Long, protocol: NetworkProtocol, description: String)
+
+object PortDescription {
+
+  def apply(r: Seq[String]): Option[PortDescription] = (for {
+    p <- Try(r.head.toLong)
+    prot = if (r(1) == "TCP") TCP else UDP
+    desc = r(2)
+  } yield new PortDescription(p, prot, desc)).toOption
 }
