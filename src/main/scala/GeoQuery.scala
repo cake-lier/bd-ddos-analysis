@@ -1,7 +1,6 @@
 package it.unibo.bd
 
-import Main.RichRDD
-
+import it.unibo.bd.utils.Utils.RichRDD
 import org.apache.spark.{ SparkConf, SparkContext }
 
 object GeoQuery extends App {

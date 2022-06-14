@@ -40,12 +40,12 @@ lazy val root = project
         .exec(
           "spark-submit "
             + "--class it.unibo.bd.Merge "
-            + "--num-executors 2 "
-            + "--executor-cores 3 "
-            + "--executor-memory 8G "
-            + "--conf spark.dynamicAllocation.enabled=false "
+//            + "--num-executors 2 "
+//            + "--executor-cores 3 "
+//            + "--executor-memory 8G "
+//            + "--conf spark.dynamicAllocation.enabled=false "
             + "main.jar "
-            + "unibo-bd2122-xxx/yyy",
+            + "unibo-bd2122-nfarabegoli/ddos",
         )
         .foreach(r => { println(r.stdOutAsString()); println(r.stdErrAsString()) })
     }),

@@ -1,13 +1,9 @@
 package it.unibo.bd
 
 import org.apache.spark.{ SparkConf, SparkContext }
-import org.apache.spark.rdd.RDD
+import utils.Utils._
 
-import java.net.InetAddress
-import java.time.LocalDateTime
-import java.time.format.{ DateTimeFormatter, DateTimeParseException }
-import scala.reflect.ClassTag
-import scala.util.Try
+import utils.Connection
 
 object Main extends App {
   val sc = new SparkContext(new SparkConf().setAppName("Main"))
@@ -28,21 +24,6 @@ object Main extends App {
     } else {
       sc.textFile("dataset.csv")
     }
-
-  implicit class RichRDD[A: ClassTag](self: RDD[A]) {
-
-    def skip(n: Int): RDD[A] = self.zipWithIndex().filter(_._2 >= n).map(_._1)
-  }
-
-  implicit class RichSeqRDD[A: ClassTag](self: RDD[Seq[A]]) {
-
-    def toColumns(h: Seq[String]): RDD[(String, Seq[A])] =
-      self
-        .flatMap(_.zipWithIndex)
-        .groupBy(_._2)
-        .sortByKey()
-        .map { case (i, vs) => (h(i), vs.map(_._1).toSeq) }
-  }
 
   val totalRows = dataset.count() - 1
 
@@ -70,49 +51,6 @@ object Main extends App {
       .collect()
       .mkString("[", ", ", "]"),
   )
-
-  case class Connection(
-      index: Long,
-      flowId: String,
-      sourceIP: InetAddress,
-      sourcePort: Long,
-      destinationIP: InetAddress,
-      destinationPort: Long,
-      protocol: Int,
-      timestamp: LocalDateTime,
-      isDDoS: Boolean,
-  )
-
-  object Connection {
-
-    def apply(r: Seq[String]): Option[Connection] =
-      (for {
-        index <- Try(r.head.toLong)
-        flowId = r(1)
-        sourceIP <- Try(InetAddress.getByName(r(2)))
-        sourcePort <- Try(r(3).toLong)
-        destinationIP <- Try(InetAddress.getByName(r(4)))
-        destinationPort <- Try(r(5).toLong)
-        protocol <- Try(r(6).toInt)
-        timestamp <-
-          Try {
-            LocalDateTime.parse(r(7), DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm:ss a"))
-          } recover { case _: DateTimeParseException =>
-            LocalDateTime.parse(r(7), DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
-          }
-        isDDoS = r(84) == "ddos"
-      } yield Connection(
-        index,
-        flowId,
-        sourceIP,
-        sourcePort,
-        destinationIP,
-        destinationPort,
-        protocol,
-        timestamp,
-        isDDoS,
-      )).toOption
-  }
 
   val parsedTable = table.map(Connection(_)).filter(_.isDefined).map(_.get)
 
