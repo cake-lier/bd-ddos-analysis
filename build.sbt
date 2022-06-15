@@ -19,10 +19,11 @@ lazy val root = project
     scalacOptions ++= Seq(
       "-language:higherKinds",
     ),
-    assembly / mainClass := Some("it.unibo.bd.Merge"),
+    assembly / mainClass := Some("it.unibo.bd.WellKnownPorts"),
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-core" % "3.2.1" % Provided,
       "org.apache.spark" %% "spark-sql" % "3.2.1" % Provided,
+      "com.github.wookietreiber" %% "scala-chart" % "0.5.1",
     ),
     Global / onLoad := {
       startupTransition compose (Global / onLoad).value
@@ -39,11 +40,11 @@ lazy val root = project
       sshClient
         .exec(
           "spark-submit "
-            + "--class it.unibo.bd.NetProtocol "
-//            + "--num-executors 2 "
-//            + "--executor-cores 3 "
-//            + "--executor-memory 8G "
-//            + "--conf spark.dynamicAllocation.enabled=false "
+            + "--class it.unibo.bd.FlowDuration "
+            + "--num-executors 2 "
+            + "--executor-cores 3 "
+            + "--executor-memory 8G "
+            + "--conf spark.dynamicAllocation.enabled=false "
             + "main.jar "
             + "unibo-bd2122-mcastellucci/project",
         )

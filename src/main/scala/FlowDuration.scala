@@ -23,6 +23,14 @@ object FlowDuration {
       s"Benign: Min: ${benignResult._1} Max: ${benignResult._2} Avg: ${benignResult._3} StdDev: ${benignResult._4}",
     )
 
+    val avgDDoS = ddosResult._3
+    val stdDevDDoS = ddosResult._4
+    val avgBenign = benignResult._3
+    val stdDevBenign = benignResult._4
+
+    println(countGaussianRange(sc, packets, isDDoS = true, avgDDoS - 1 * stdDevDDoS, avgDDoS + 1 * stdDevDDoS))
+    println(countGaussianRange(sc, packets, isDDoS = false, avgBenign - 1 * stdDevBenign, avgBenign + 1 * stdDevBenign))
+
     val x = (BigDecimal(0) to BigDecimal(1.5e9) by BigDecimal(1.5e6)).map(_.toDouble)
     val yDDoS = x.map(c => (c, gaussian(c, ddosResult._3, ddosResult._4))).toXYSeries("DDoS")
     val yBenign = x.map(c => (c, gaussian(c, benignResult._3, benignResult._4))).toXYSeries("Benign")
@@ -64,5 +72,31 @@ object FlowDuration {
 
     val stdDev = Math.sqrt(variance / count)
     (result._1, result._2, avg, stdDev)
+  }
+
+  /**
+   * Return the number inside the range and outside.
+   * @return
+   */
+  def countGaussianRange(
+      sc: SparkContext,
+      dataset: RDD[Connection],
+      isDDoS: Boolean,
+      lower: Double,
+      upper: Double,
+  ): (Int, Int) = {
+    val upperBroadcast = sc.broadcast(upper)
+    val lowerBroadcast = sc.broadcast(lower)
+
+    dataset
+      .groupBy(_.flowId)
+      .filter { case (_, groups) =>
+        groups.forall(g => g.isDDoS == isDDoS && g.flowDuration > 0 && g.flowDuration == groups.head.flowDuration)
+      }
+      .map(g => g._2.head.flowDuration)
+      .map(f => if (f > lowerBroadcast.value && f < upperBroadcast.value) (1, 0) else (0, 1))
+      .reduce { case ((inRange1, outRange1), (inRange2, outRange2)) =>
+        (inRange1 + inRange2, outRange1 + outRange2)
+      }
   }
 }
