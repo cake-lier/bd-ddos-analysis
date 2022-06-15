@@ -21,7 +21,7 @@ lazy val root = project
     ),
     assembly / mainClass := Some("it.unibo.bd.WellKnownPorts"),
     libraryDependencies ++= Seq(
-      "org.apache.spark" %% "spark-core" % "3.2.1" % Provided,
+      "org.apache.spark" %% "spark-core" % "3.3.0" % Provided,
       "org.apache.spark" %% "spark-sql" % "3.2.1" % Provided,
       "com.github.wookietreiber" %% "scala-chart" % "0.5.1",
     ),
