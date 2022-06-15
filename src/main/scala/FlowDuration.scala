@@ -23,7 +23,7 @@ object FlowDuration {
       s"Benign: Min: ${benignResult._1} Max: ${benignResult._2} Avg: ${benignResult._3} StdDev: ${benignResult._4}",
     )
 
-    val x = (BigDecimal(0) to BigDecimal(5e9) by BigDecimal(1e6)).map(_.toDouble)
+    val x = (BigDecimal(0) to BigDecimal(1.5e9) by BigDecimal(1.5e6)).map(_.toDouble)
     val yDDoS = x.map(c => (c, gaussian(c, ddosResult._3, ddosResult._4))).toXYSeries("DDoS")
     val yBenign = x.map(c => (c, gaussian(c, benignResult._3, benignResult._4))).toXYSeries("Benign")
     val chart = XYLineChart(Seq(yDDoS, yBenign))
