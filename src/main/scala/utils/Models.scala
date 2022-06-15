@@ -19,6 +19,7 @@ case class Connection(
     destinationPort: Long,
     protocol: NetworkProtocol,
     timestamp: LocalDateTime,
+    flowDuration: Long,
     isDDoS: Boolean,
 )
 
@@ -39,6 +40,7 @@ object Connection {
         } recover { case _: DateTimeParseException =>
           LocalDateTime.parse(r(7), DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
         }
+      flowDuration <- Try(r(8).toLong)
       isDDoS = r(84) == "ddos"
     } yield Connection(
       index,
@@ -49,6 +51,7 @@ object Connection {
       destinationPort,
       protocol,
       timestamp,
+      flowDuration,
       isDDoS,
     )).toOption
 }

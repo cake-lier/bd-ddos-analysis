@@ -13,8 +13,8 @@ The repository for the Big Data course project based on analysis of DDoS Attacks
 
 ### Packet Analysis
 
-  - [ ] The most "Well-Known" ports attacked by DDoS attacks
-  - [ ] The most used network layer protocol vectoring a DDoS attacks
+  - [X] The most "Well-Known" ports attacked by DDoS attacks
+  - [X] The most used network layer protocol vectoring a DDoS attacks
 
 ### Metrics evaluation
   - [ ] Check the number of true-positive, false-negatives, true-negatives, false-positive.
