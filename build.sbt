@@ -39,13 +39,13 @@ lazy val root = project
       sshClient
         .exec(
           "spark-submit "
-            + "--class it.unibo.bd.Merge "
+            + "--class it.unibo.bd.NetProtocol "
 //            + "--num-executors 2 "
 //            + "--executor-cores 3 "
 //            + "--executor-memory 8G "
 //            + "--conf spark.dynamicAllocation.enabled=false "
             + "main.jar "
-            + "unibo-bd2122-nfarabegoli/ddos",
+            + "unibo-bd2122-mcastellucci/project",
         )
         .foreach(r => { println(r.stdOutAsString()); println(r.stdErrAsString()) })
     }),
