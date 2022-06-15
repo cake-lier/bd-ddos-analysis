@@ -1,6 +1,7 @@
 package it.unibo.bd
 
-import it.unibo.bd.utils.Utils.RichRDD
+import utils.Utils.RichRDD
+
 import org.apache.spark.{ SparkConf, SparkContext }
 
 object Merge extends App {
