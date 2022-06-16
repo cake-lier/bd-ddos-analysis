@@ -78,3 +78,9 @@ object PortDescription {
       description = r(2)
     } yield PortDescription(p, protocol, description)).toOption
 }
+
+case class GeoIP()
+
+object GeoIP {
+  def apply(r: Seq[String]): Option[GeoIP] = ???
+}
