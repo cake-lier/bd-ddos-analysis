@@ -1,16 +1,21 @@
 package it.unibo.bd
 package utils
 
+import utils.NetworkProtocol.NetworkProtocol
+
 import java.net.InetAddress
 import java.time.LocalDateTime
 import java.time.format.{ DateTimeFormatter, DateTimeParseException }
 import scala.util.Try
 
-sealed trait NetworkProtocol
-case object TCP extends NetworkProtocol
-case object UDP extends NetworkProtocol
+object NetworkProtocol extends Enumeration {
+  type NetworkProtocol = Value
 
-case class Connection(
+  val TCP: NetworkProtocol = Value
+  val UDP: NetworkProtocol = Value
+}
+
+case class Packet(
     index: Long,
     flowId: String,
     sourceIP: InetAddress,
@@ -20,12 +25,14 @@ case class Connection(
     protocol: NetworkProtocol,
     timestamp: LocalDateTime,
     flowDuration: Long,
+    byteSpeed: Double,
+    packetSpeed: Double,
     isDDoS: Boolean,
 )
 
-object Connection {
+object Packet {
 
-  def apply(r: Seq[String]): Option[Connection] =
+  def apply(r: Seq[String]): Option[Packet] =
     (for {
       index <- Try(r.head.toLong)
       flowId = r(1)
@@ -33,7 +40,7 @@ object Connection {
       sourcePort <- Try(r(3).toLong)
       destinationIP <- Try(InetAddress.getByName(r(4)))
       destinationPort <- Try(r(5).toLong)
-      protocol <- Try(r(6).toInt).map(c => if (c == 6) TCP else UDP)
+      protocol <- Try(r(6).toInt).map(c => if (c == 6) NetworkProtocol.TCP else NetworkProtocol.UDP)
       timestamp <-
         Try {
           LocalDateTime.parse(r(7), DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm:ss a"))
@@ -41,8 +48,10 @@ object Connection {
           LocalDateTime.parse(r(7), DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
         }
       flowDuration <- Try(r(8).toLong)
+      byteSpeed <- Try(r(21).toDouble)
+      packetSpeed <- Try(r(22).toDouble)
       isDDoS = r(84) == "ddos"
-    } yield Connection(
+    } yield Packet(
       index,
       flowId,
       sourceIP,
@@ -52,6 +61,8 @@ object Connection {
       protocol,
       timestamp,
       flowDuration,
+      byteSpeed,
+      packetSpeed,
       isDDoS,
     )).toOption
 }
@@ -60,9 +71,10 @@ case class PortDescription(port: Long, protocol: NetworkProtocol, description: S
 
 object PortDescription {
 
-  def apply(r: Seq[String]): Option[PortDescription] = (for {
-    p <- Try(r.head.toLong)
-    prot = if (r(1) == "TCP") TCP else UDP
-    desc = r(2)
-  } yield new PortDescription(p, prot, desc)).toOption
+  def apply(r: Seq[String]): Option[PortDescription] =
+    (for {
+      p <- Try(r.head.toLong)
+      protocol = if (r(1) == "TCP") NetworkProtocol.TCP else NetworkProtocol.UDP
+      description = r(2)
+    } yield PortDescription(p, protocol, description)).toOption
 }

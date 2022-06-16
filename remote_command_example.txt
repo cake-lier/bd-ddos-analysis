@@ -1,0 +1,1 @@
+spark-submit --class it.unibo.bd.queries.FlowDuration --num-executors 2 --executor-cores 3 --executor-memory 8G --conf spark.dynamicAllocation.enabled=false main.jar s3://xxx/yyy/
