@@ -8,7 +8,7 @@ import org.apache.spark.rdd.RDD
 import scalax.chart.api.{ ChartPNGExporter, RichTuple2s, XYLineChart }
 import scalax.chart.module.XYChartFactories.XYBarChart
 
-object FlowDuration {
+object FlowPacketSpeed {
 
   def main(args: Array[String]): Unit = {
     val sc = new SparkContext(new SparkConf().setAppName("FlowDuration"))
@@ -26,16 +26,28 @@ object FlowDuration {
     val benignFlow =
       packets
         .filter { case (_, groups) =>
-          groups.forall(g => !g.isDDoS && g.flowDuration > 0 && g.flowDuration == groups.head.flowDuration)
+          groups.forall(g =>
+            !g.isDDoS
+              && g.packetSpeed > 0
+              && g.packetSpeed < Double.PositiveInfinity
+              && g.packetSpeed != Double.NaN
+              && g.packetSpeed == groups.head.packetSpeed,
+          )
         }
-        .map(g => g._2.head.flowDuration)
+        .map(g => g._2.head.packetSpeed)
 
     val ddosFlow =
       packets
         .filter { case (_, groups) =>
-          groups.forall(g => g.isDDoS && g.flowDuration > 0 && g.flowDuration == groups.head.flowDuration)
+          groups.forall(g =>
+            g.isDDoS
+              && g.packetSpeed > 0
+              && g.packetSpeed < Double.PositiveInfinity
+              && g.packetSpeed != Double.NaN
+              && g.packetSpeed == groups.head.packetSpeed,
+          )
         }
-        .map(g => g._2.head.flowDuration)
+        .map(g => g._2.head.packetSpeed)
 
     val ddosResult = getStatisticalData(sc, ddosFlow)
     val benignResult = getStatisticalData(sc, benignFlow)
@@ -74,7 +86,7 @@ object FlowDuration {
       .toSeq
       .toXYSeries("Histogram Benign")
 
-    val x = (BigDecimal(0) to BigDecimal(2e8) by BigDecimal(2e6)).map(_.toDouble)
+    val x = (BigDecimal(0) to BigDecimal(1000000) by BigDecimal(5000)).map(_.toDouble)
 
     val gaussianDDoS = x.map(c => (c, gaussian(c, ddosResult._3, ddosResult._4))).toXYSeries("DDoS")
     val gaussianBenign = x.map(c => (c, gaussian(c, benignResult._3, benignResult._4))).toXYSeries("Benign")
@@ -99,10 +111,10 @@ object FlowDuration {
    * @param isDDoS
    * @return
    */
-  def getStatisticalData(sc: SparkContext, dataset: RDD[Long]): (Long, Long, Double, Double) = {
+  def getStatisticalData(sc: SparkContext, dataset: RDD[Double]): (Double, Double, Double, Double) = {
     val result =
       dataset
-        .map(f => (f, f, f, 1))
+        .map(s => (s, s, s, 1))
         .reduce { case ((min1, max1, avg1, count1), (min2, max2, avg2, count2)) =>
           (min1 min min2, max1 max max2, avg1 + avg2, count1 + count2)
         }
@@ -126,7 +138,7 @@ object FlowDuration {
    */
   def countGaussianRange(
       sc: SparkContext,
-      dataset: RDD[Long],
+      dataset: RDD[Double],
       lower: Double,
       upper: Double,
   ): (Int, Int) = {
