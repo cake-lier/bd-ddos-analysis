@@ -4,8 +4,8 @@ package utils
 import utils.NetworkProtocol.NetworkProtocol
 
 import java.net.InetAddress
-import java.time.LocalDateTime
 import java.time.format.{ DateTimeFormatter, DateTimeParseException }
+import java.time.{ Instant, LocalDateTime, ZoneId }
 import scala.util.Try
 
 object NetworkProtocol extends Enumeration {
@@ -13,6 +13,56 @@ object NetworkProtocol extends Enumeration {
 
   val TCP: NetworkProtocol = Value
   val UDP: NetworkProtocol = Value
+}
+
+case class Record(
+    stime: LocalDateTime,
+    protocol: NetworkProtocol,
+    saddr: String,
+    sport: Long,
+    dir: String,
+    daddr: String,
+    dport: Long,
+    pkts: Long,
+    bytes: Long,
+    ltime: LocalDateTime,
+    sbytes: Long,
+    dbytes: Long,
+    isDDoS: Boolean,
+)
+
+object Record {
+
+  def apply(r: Seq[String]): Option[Record] =
+    (for {
+      stime <- Try(Instant.ofEpochMilli((r.head.toDouble * 1000).toLong).atZone(ZoneId.systemDefault()).toLocalDateTime)
+      protocol <- Try(r(2)).map(c => if (c == "tcp") NetworkProtocol.TCP else NetworkProtocol.UDP)
+      saddr = r(3)
+      sport <- Try(r(4).toLong)
+      dir = r(5)
+      daddr = r(6)
+      dport <- Try(r(7).toLong)
+      pkts <- Try(r(8).toLong)
+      bytes <- Try(r(9).toLong)
+      ltime <- Try(Instant.ofEpochMilli((r(12).toDouble * 1000).toLong).atZone(ZoneId.systemDefault()).toLocalDateTime)
+      sbytes <- Try(r(28).toLong)
+      dbytes <- Try(r(29).toLong)
+      isDDoS <- Try(r(34).toInt).map(p => if (p == 1) true else false)
+    } yield Record(
+      stime,
+      protocol,
+      saddr,
+      sport,
+      dir,
+      daddr,
+      dport,
+      pkts,
+      bytes,
+      ltime,
+      sbytes,
+      dbytes,
+      isDDoS,
+    )).toOption
 }
 
 case class Packet(
@@ -77,10 +127,4 @@ object PortDescription {
       protocol = if (r(1) == "TCP") NetworkProtocol.TCP else NetworkProtocol.UDP
       description = r(2)
     } yield PortDescription(p, protocol, description)).toOption
-}
-
-case class GeoIP()
-
-object GeoIP {
-  def apply(r: Seq[String]): Option[GeoIP] = ???
 }
