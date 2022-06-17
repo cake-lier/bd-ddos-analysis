@@ -6,7 +6,18 @@ import org.apache.spark.{ SparkConf, SparkContext }
 import scala.util.Try
 
 object TestNewDataset {
-  case class Pkt(saddr: String, daddr: String, sport: Long, dport: Long, pkts: Long, stime: String)
+
+  case class Pkt(
+      saddr: String,
+      daddr: String,
+      sport: Long,
+      dport: Long,
+      protocol: String,
+      pkts: Long,
+      stime: String,
+      ltime: String,
+      isDDoS: Boolean,
+  )
 
   object Pkt {
 
@@ -14,10 +25,13 @@ object TestNewDataset {
       sport <- Try(r(4).toLong)
       dport <- Try(r(7).toLong)
       pkts <- Try(r(8).toLong)
+      protocol = r(2)
       stime = r.head
+      ltime = r(12)
       saddr = r(3)
       daddr = r(6)
-    } yield Pkt(saddr, daddr, sport, dport, pkts, stime)).toOption
+      isDDoS <- Try(r(34).toInt)
+    } yield Pkt(saddr, daddr, sport, dport, protocol, pkts, stime, ltime, if (isDDoS == 1) true else false)).toOption
   }
 
   def main(args: Array[String]): Unit = {
@@ -31,13 +45,20 @@ object TestNewDataset {
       .map(Pkt(_))
       .filter(_.isDefined)
       .map(_.get)
-      .map(p => ((p.saddr, p.daddr, p.sport, p.dport, p.pkts), p.stime))
+      .map(p => ((p.saddr, p.daddr, p.sport, p.dport, p.protocol), (p.isDDoS, p.pkts, p.stime, p.ltime)))
+      .filter(!_._2._1)
       .groupByKey()
+//      .filter { case (_, iterable) =>
+//        iterable.exists(!_._1) && iterable.exists(_._1)
+//      }
       .map { case (k, iterable) =>
-        (k, iterable.size)
+        val minTime = iterable.map(i => i._3.toDouble).min
+        val maxTime = iterable.map(_._4.toDouble).max
+        (k, maxTime - minTime)
       }
-      // .take(20)
-      .collect()
+      .sortBy(_._2, ascending = false)
+      .take(5)
+    // .collect()
 
     println(datasetGroupedByFlow.mkString("Array(", ", ", ")"))
   }
