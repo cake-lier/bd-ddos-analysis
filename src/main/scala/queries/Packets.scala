@@ -1,12 +1,12 @@
 package it.unibo.bd
 package queries
 
-import utils.{DoubleStatistics, Record}
+import utils.{ DoubleStatistics, Record }
 import utils.RichTuples.RichTuple2
 
-import com.cibo.evilplot.plot.{FunctionPlot, Histogram, Overlay}
+import com.cibo.evilplot.plot.{ FunctionPlot, Overlay }
 import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.rdd.RDD
 
 object Packets {
@@ -48,8 +48,7 @@ object Packets {
         }
 
     Overlay(
-      FunctionPlot(gaussian(_, ddosResults.head.mean, ddosResults.head.stdDev))
-      Histogram.
+      FunctionPlot(gaussian(_, ddosResults.head.mean, ddosResults.head.stdDev)),
     ).title("A bunch of polynomials.")
       .overlayLegend()
       .standard()
@@ -85,7 +84,7 @@ object Packets {
         )
         .reduce((s1, s2) => s1.zip(s2).map(t => t._1 + t._2))
         .zip(results.map(_._4))
-        .map(t => t._1 / t._2)
+        .map(t => Math.sqrt(t._1 / t._2))
 
     results.zip(means).zip(stdDevs).map { case (((min, max, _, _), mean), stdDev) =>
       DoubleStatistics(min, max, mean, stdDev)
