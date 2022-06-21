@@ -1,9 +1,14 @@
 package it.unibo.bd
 package queries
 
-import utils.Packet
+import utils.Record
 
+import com.cibo.evilplot.plot.PieChart
+import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
 import org.apache.spark.{ SparkConf, SparkContext }
+import utils.RichTuples.RichTuple2
+
+import java.io.File
 
 object Basic {
 
@@ -11,37 +16,37 @@ object Basic {
     val sc = new SparkContext(new SparkConf().setAppName("Basic"))
     println(s"Application started at http://localhost:20888/proxy/${sc.applicationId}/\n")
 
-    val packets =
-      sc.textFile(s"${args(0)}/ddos-dataset.csv")
-        .map(_.split(","))
-        .map(Packet(_))
+    val pathTCPDataset = s"${args(0)}/DDoS_TCP.csv"
+    val pathUDPDataset = s"${args(0)}/DDoS_UDP.csv"
+    val pathHTTPDataset = s"${args(0)}/DDoS_HTTP.csv"
+    val dataset = sc.textFile(s"$pathTCPDataset,$pathUDPDataset,$pathHTTPDataset")
+    val recordDataset =
+      dataset
+        .map(_.replace("\"", ""))
+        .map(_.split(";"))
+        .map(Record(_))
         .filter(_.isDefined)
         .map(_.get)
+        .cache()
 
-    val totalRows = packets.count()
+    val recordDatasetSize = recordDataset.count()
+    val ddosCount =
+      recordDataset
+        .map(r => if (r.isDDoS) (1, 0) else (0, 1))
+        .reduce(_ + _)
+    val ddosPercentage = ddosCount._1 / recordDatasetSize.toDouble * 100
+    val legitPercentage = ddosCount._2 / recordDatasetSize.toDouble * 100
 
-    println(s"Total rows: $totalRows")
-
-    val totalDDoSRows = packets.filter(_.isDDoS).count()
-
-    println(
-      s"Total DDoS rows: $totalDDoSRows",
-      s"Percentage of DDoS rows: ${(totalDDoSRows / totalRows.toDouble) * 100}",
+    val file = new File("total_pie.png")
+    file.createNewFile()
+    PieChart(
+      Seq(
+        f"DDoS traffic ($ddosPercentage%2.4f%%)" -> ddosCount._1.toDouble,
+        f"Legit traffic ($legitPercentage%2.4f%%)" -> ddosCount._2.toDouble,
+      ),
     )
-
-    val totalFlows = packets.groupBy(_.flowId).count()
-
-    println(s"Total flows: $totalFlows")
-
-    val totalDDoSFlows =
-      packets
-        .groupBy(_.flowId)
-        .filter(g => g._2.forall(_.isDDoS))
-        .count()
-
-    println(
-      s"Total DDoS flows: $totalDDoSFlows",
-      s"Percentage of DDoS flows: ${(totalDDoSFlows / totalFlows.toDouble) * 100}",
-    )
+      .rightLegend(labels = Some(Seq("DDoS traffic", "Legit traffic")))
+      .render()
+      .write(file)
   }
 }

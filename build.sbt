@@ -25,7 +25,7 @@ lazy val root = project
       "org.apache.spark" %% "spark-core" % "3.3.0" % Provided,
       "org.apache.spark" %% "spark-sql" % "3.3.0" % Provided,
       "org.apache.spark" %% "spark-streaming" % "3.3.0" % Provided,
-      "com.github.wookietreiber" %% "scala-chart" % "0.5.1",
+      "io.github.cibotech" %% "evilplot" % "0.8.1",
     ),
     Global / onLoad := {
       startupTransition compose (Global / onLoad).value

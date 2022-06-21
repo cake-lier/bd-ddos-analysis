@@ -1,11 +1,7 @@
 package it.unibo.bd
 package queries
 
-import utils.{ Packet, PortDescription }
-import utils.NetworkProtocol.NetworkProtocol
-
 import org.apache.spark.{ SparkConf, SparkContext }
-import org.apache.spark.rdd.RDD
 
 object WellKnownPorts {
 
@@ -13,6 +9,7 @@ object WellKnownPorts {
     val sc = new SparkContext(new SparkConf().setAppName("WellKnownPorts"))
     println(s"Application started at http://localhost:20888/proxy/${sc.applicationId}/\n")
 
+    /*
     val packets =
       sc.textFile(s"${args(0)}/ddos-dataset.csv")
         .map(_.split(","))
@@ -77,4 +74,7 @@ object WellKnownPorts {
       .collect()
       .foreach(r => println(s"(${r._1}, ${r._2}): (Occurrences: ${r._3}, Description: ${r._4})"))
 
+
+     */
+  }
 }

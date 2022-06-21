@@ -1,8 +1,6 @@
 package it.unibo.bd
 package queries
 
-import utils.{ NetworkProtocol, Packet }
-
 import org.apache.spark.{ SparkConf, SparkContext }
 
 object NetProtocol {
@@ -11,6 +9,7 @@ object NetProtocol {
     val sc = new SparkContext(new SparkConf().setAppName("NetProtocol"))
     println(s"Application started at http://localhost:20888/proxy/${sc.applicationId}/\n")
 
+    /*
     val packets =
       sc.textFile(s"${args(0)}/ddos-dataset.csv")
         .map(_.split(","))
@@ -42,5 +41,7 @@ object NetProtocol {
     println(s"UDP DDoS packets: ${values._4}")
     println(s"Percentage of TCP DDoS packets over total: ${(values._2 / values._1.toDouble) * 100}")
     println(s"Percentage of UDP DDoS packets over total: ${(values._4 / values._3.toDouble) * 100}")
+
+     */
   }
 }
