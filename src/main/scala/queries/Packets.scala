@@ -4,10 +4,12 @@ package queries
 import utils.{ DoubleStatistics, Record }
 import utils.RichTuples.RichTuple2
 
-import com.cibo.evilplot.plot.{ FunctionPlot, Overlay }
+import com.cibo.evilplot.plot.{ BarChart, FunctionPlot, Overlay }
 import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.rdd.RDD
+
+import java.io.File
 
 object Packets {
 
@@ -31,10 +33,8 @@ object Packets {
     val legitDataset = recordDataset.filter(!_.isDDoS)
     val extractors: Seq[Record => Long] = Seq(_.packets, _.bytes, _.sourceBytes, _.destinationBytes)
 
-    val ddosResults =
-      getStatistics(sc, ddosDataset, extractors)
-    val legitResults =
-      getStatistics(sc, legitDataset, extractors)
+    val ddosResults = getStatistics(sc, ddosDataset, extractors)
+    val legitResults = getStatistics(sc, legitDataset, extractors)
 
     val ddosRanges =
       ddosResults
@@ -47,18 +47,62 @@ object Packets {
           countGaussianRange(sc, legitDataset.map(e), s.mean - 3 * s.stdDev, s.mean + 3 * s.stdDev)
         }
 
+    showApproximationPlot(ddosResults.head, ddosDataset, extractors.head, "packets-stats", "packets")
+    showApproximationPlot(ddosResults(1), ddosDataset, extractors(1), "bytes-stats", "bytes")
+    showApproximationPlot(ddosResults(2), ddosDataset, extractors(2), "source-bytes-stats", "source bytes")
+    showApproximationPlot(ddosResults(3), ddosDataset, extractors(3), "dest-bytes-stats", "destination bytes")
+
+    showApproximationPlot(legitResults.head, legitDataset, extractors.head, "packets-stats", "packets")
+    showApproximationPlot(legitResults(1), legitDataset, extractors(1), "bytes-stats", "bytes")
+    showApproximationPlot(legitResults(2), legitDataset, extractors(2), "source-bytes-stats", "source bytes")
+    showApproximationPlot(legitResults(3), legitDataset, extractors(3), "destination-bytes-stats", "destination bytes")
+
+    showDifferencePlot(ddosResults.head, legitResults.head, "packets-diff", "packets")
+    showDifferencePlot(ddosResults(1), legitResults(1), "bytes-diff", "bytes")
+    showDifferencePlot(ddosResults(2), legitResults(2), "source-bytes-diff", "source bytes")
+    showDifferencePlot(ddosResults(3), legitResults(3), "destination-bytes-diff", "destination bytes")
+  }
+
+  def showDifferencePlot(
+      statsDDoS: DoubleStatistics,
+      statsLegit: DoubleStatistics,
+      filename: String,
+      variableName: String,
+  ): Unit = {
+    val file = new File(s"images/$filename.png")
+    file.createNewFile()
     Overlay(
-      FunctionPlot(gaussian(_, ddosResults.head.mean, ddosResults.head.stdDev)),
-    ).title("A bunch of polynomials.")
-      .overlayLegend()
+      FunctionPlot(gaussian(statsDDoS.mean, statsDDoS.stdDev)),
+      FunctionPlot(gaussian(statsLegit.mean, statsLegit.stdDev)),
+    )
+      .title(s"Difference in distribution between DDoS and legit $variableName")
       .standard()
       .render()
-
+      .write(file)
   }
 
-  def gaussian(x: Double, avg: Double, stdDev: Double): Double = {
-    1 / (stdDev * Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * Math.pow(x - avg, 2) / Math.pow(stdDev, 2))
+  def showApproximationPlot(
+      stats: DoubleStatistics,
+      dataset: RDD[Record],
+      extractor: Record => Long,
+      filename: String,
+      variableName: String,
+  ): Unit = {
+    val ddosHistogram = dataset.map(extractor).histogram(100)
+    val file = new File(s"images/$filename.png")
+    file.createNewFile()
+    Overlay(
+      FunctionPlot(gaussian(stats.mean, stats.stdDev)),
+      BarChart(ddosHistogram._2.map(_.toDouble)).standard(xLabels = ddosHistogram._2.map(_.toString)),
+    )
+      .title(s"Correctness of approximation of value distribution for $variableName variable")
+      .standard()
+      .render()
+      .write(file)
   }
+
+  def gaussian(avg: Double, stdDev: Double)(x: Double): Double =
+    1 / (stdDev * math.sqrt(2 * math.Pi)) * math.exp(-0.5 * math.pow(x - avg, 2) / math.pow(stdDev, 2))
 
   def getStatistics(
       sc: SparkContext,
