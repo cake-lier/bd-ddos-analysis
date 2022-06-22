@@ -32,7 +32,7 @@
 73,TCP,NETRJS protocol
 74,TCP,NETRJS protocol
 79,TCP,Finger protocol
-80,TCP,"Hypertext Transfer Protocol (HTTP) uses TCP in versions 1.x and 2. HTTP/3 uses QUIC, a transport protocol on top of UDP."
+80,TCP,HTTP
 81,TCP,TorPark onion routing
 83,TCP,"MIT ML Device, networking file system"
 88,TCP,Kerberos authentication system
@@ -17936,7 +17936,7 @@
 73,UDP,NETRJS protocol
 74,UDP,NETRJS protocol
 79,UDP,Finger protocol
-80,UDP,"Hypertext Transfer Protocol (HTTP) uses TCP in versions 1.x and 2. HTTP/3 uses QUIC, a transport protocol on top of UDP."
+80,UDP,HTTP
 82,UDP,TorPark control
 83,UDP,"MIT ML Device, networking file system"
 88,UDP,Kerberos authentication system

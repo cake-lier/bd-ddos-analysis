@@ -1,19 +1,18 @@
 package it.unibo.bd
 package queries
 
-import com.cibo.evilplot.colors.{ Color, HTMLNamedColors }
-import com.cibo.evilplot.plot.{ BarChart, Overlay }
-import com.cibo.evilplot.plot.aesthetics.DefaultTheme.{ defaultTheme, DefaultColors }
-import it.unibo.bd.utils.Record
+import utils.Record
+
+import com.cibo.evilplot.plot.BarChart
+import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
 import org.apache.spark.{ SparkConf, SparkContext }
-import spire.math.interval.Overlap
 
 import java.io.File
 
 object AttackedMachines {
 
   def main(args: Array[String]): Unit = {
-    val sc = new SparkContext(new SparkConf().setAppName("WellKnownPorts"))
+    val sc = new SparkContext(new SparkConf().setAppName("AttackedMachines"))
     println(s"Application started at http://localhost:20888/proxy/${sc.applicationId}/\n")
 
     val pathTCPDataset = s"${args(0)}/DDoS_TCP.csv"
@@ -47,16 +46,11 @@ object AttackedMachines {
       .toMap
 
     val totalTrafficOnlyDDos = mostAttackedIp.filterKeys(mostDDoSIPs.keySet(_))
-
-    println("Stampo")
-    println(mostDDoSIPs)
-
-    val file = new File("/home/nicolas/Documents/uni/lm/bd/bd-ddos-analysis/ddos-traffic.png")
-    file.createNewFile()
-
     val a1 = totalTrafficOnlyDDos.toSeq.sortBy(_._1)
     val a2 = mostDDoSIPs.toSeq.sortBy(_._1)
 
+    val file = new File("images/ddos-traffic.png")
+    file.createNewFile()
     BarChart
       .clustered(a1.map(_._2).zip(a2.map(_._2)).map(v => Seq(v._1, v._2)), labels = a1.map(_._1))
       .standard(a1.map(_._1))
