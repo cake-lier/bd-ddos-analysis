@@ -4,7 +4,9 @@ package queries
 import utils.{ Gaussian, Quartiles, Record }
 import utils.RichTuples.RichTuple2
 
-import com.cibo.evilplot.plot.{ FunctionPlot, Overlay }
+import com.cibo.evilplot.colors.HTMLNamedColors
+import com.cibo.evilplot.numeric.Bounds
+import com.cibo.evilplot.plot.{ Facets, FunctionPlot, Overlay }
 import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.rdd.RDD
@@ -132,11 +134,26 @@ object Packets {
                | \tMax: ${quartilesLegit.max}
       """.stripMargin)
 
-    Overlay(
-      FunctionPlot(gaussian(gaussianDDoS.mean, gaussianDDoS.stdDev)),
-      FunctionPlot(gaussian(gaussianLegit.mean, gaussianLegit.stdDev)),
+    Facets(
+      Seq(
+        Seq(
+          FunctionPlot.series(
+            gaussian(gaussianDDoS.mean, gaussianDDoS.stdDev),
+            "DDoS",
+            HTMLNamedColors.dodgerBlue,
+            Some(Bounds(0, gaussianDDoS.mean + 3 * gaussianDDoS.stdDev)),
+          ),
+          FunctionPlot.series(
+            gaussian(gaussianLegit.mean, gaussianLegit.stdDev),
+            "Legit",
+            HTMLNamedColors.orange,
+            Some(Bounds(0, gaussianLegit.mean + 3 * gaussianLegit.stdDev)),
+          ),
+        ),
+      ),
     )
       .title(s"Difference in distribution between DDoS and legit $variableName")
+      .overlayLegend()
       .standard()
       .render()
       .write(file)
