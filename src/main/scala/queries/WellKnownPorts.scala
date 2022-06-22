@@ -43,12 +43,13 @@ object WellKnownPorts {
 
     val totalPortsCount = portsCountByJoin.map(_._2._1).reduce(_ + _).toDouble
 
-    val chartSequence = portsCountByJoin
-      .take(2)
-      .map { case ((port, protocol), (count, desc)) =>
-        (f"$port - $protocol (${count.toDouble / totalPortsCount * 100}%2.2f%%)", count.toDouble, desc)
-      }
-      .toSeq
+    val chartSequence =
+      portsCountByJoin
+        .take(2)
+        .map { case ((port, protocol), (count, desc)) =>
+          (f"$port - $protocol (${count.toDouble / totalPortsCount * 100}%2.2f%%)", count.toDouble, desc)
+        }
+        .toSeq
 
     val finalSequence = chartSequence :+ ("other", totalPortsCount - chartSequence.map(_._2).sum, "other")
 

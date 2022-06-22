@@ -29,25 +29,27 @@ object AttackedMachines {
         .map(_.get)
         .cache()
 
-    val mostDDoSIPs = recordDataset
-      .filter(_.isDDoS)
-      .map(r => (r.destinationAddress, r.bytes))
-      .reduceByKey(_ + _)
-      .map { case (ip, traffic) => (ip, traffic / 1024.toDouble) }
-      .sortBy(_._2, ascending = false)
-      .take(5)
-      .toMap
+    val ddosTrafficByIP =
+      recordDataset
+        .filter(_.isDDoS)
+        .map(r => (r.destinationAddress, r.bytes))
+        .reduceByKey(_ + _)
+        .map { case (ip, traffic) => (ip, traffic / 1024.toDouble) }
+        .sortBy(_._2, ascending = false)
+        .take(5)
+        .toMap
 
-    val mostAttackedIp = recordDataset
-      .map(r => (r.destinationAddress, r.bytes))
-      .reduceByKey(_ + _)
-      .map { case (ip, traffic) => (ip, traffic / 1024.toDouble) }
-      .collect()
-      .toMap
+    val trafficByIP =
+      recordDataset
+        .map(r => (r.destinationAddress, r.bytes))
+        .reduceByKey(_ + _)
+        .map { case (ip, traffic) => (ip, traffic / 1024.toDouble) }
+        .collect()
+        .toMap
 
-    val totalTrafficOnlyDDos = mostAttackedIp.filterKeys(mostDDoSIPs.keySet(_))
+    val totalTrafficOnlyDDos = trafficByIP.filterKeys(ddosTrafficByIP.keySet(_))
     val a1 = totalTrafficOnlyDDos.toSeq.sortBy(_._1)
-    val a2 = mostDDoSIPs.toSeq.sortBy(_._1)
+    val a2 = ddosTrafficByIP.toSeq.sortBy(_._1)
 
     val file = new File("images/ddos-traffic.png")
     file.createNewFile()
