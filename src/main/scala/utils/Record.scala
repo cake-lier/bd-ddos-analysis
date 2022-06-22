@@ -16,11 +16,7 @@ case class Record(
     bytes: Long,
     endTime: LocalDateTime,
     duration: Double,
-    sourceBytes: Long,
-    destinationBytes: Long,
     rate: Double,
-    sourceRate: Double,
-    destinationRate: Double,
     isDDoS: Boolean,
 )
 
@@ -43,11 +39,7 @@ object Record {
         Instant.ofEpochMilli((r(12).toDouble * 1000).toLong).atZone(ZoneId.systemDefault()).toLocalDateTime,
       )
       duration <- Try(r(14).toDouble)
-      sourceBytes <- Try(r(28).toLong)
-      destinationBytes <- Try(r(29).toLong)
       rate <- Try(r(30).toDouble)
-      sourceRate <- Try(r(31).toDouble)
-      destinationRate <- Try(r(32).toDouble)
       isDDoS = r(34) == "1"
     } yield new Record(
       startTime,
@@ -61,11 +53,7 @@ object Record {
       bytes,
       endTime,
       duration,
-      sourceBytes,
-      destinationBytes,
       rate,
-      sourceRate,
-      destinationRate,
       isDDoS,
     )).toOption
 }

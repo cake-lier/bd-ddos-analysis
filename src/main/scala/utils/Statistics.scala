@@ -1,6 +1,5 @@
 package it.unibo.bd
 package utils
 
-case class DoubleStatistics(min: Double, max: Double, mean: Double, stdDev: Double)
-
-case class LongStatistics(min: Long, max: Long, mean: Double, stdDev: Double)
+case class Quartiles[T: Numeric](min: T, firstQuartile: T, secondQuartile: T, thirdQuartile: T, max: T)
+case class Gaussian(mean: Double, stdDev: Double)

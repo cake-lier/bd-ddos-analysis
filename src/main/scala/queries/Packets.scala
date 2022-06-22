@@ -1,15 +1,17 @@
 package it.unibo.bd
 package queries
 
-import utils.{ DoubleStatistics, Record }
+import utils.{ Gaussian, Quartiles, Record }
 import utils.RichTuples.RichTuple2
 
-import com.cibo.evilplot.plot.{ BarChart, FunctionPlot, Overlay }
+import com.cibo.evilplot.plot.{ FunctionPlot, Overlay }
 import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.rdd.RDD
+import spire.ClassTag
 
 import java.io.File
+import scala.math.Numeric.Implicits.infixNumericOps
 
 object Packets {
 
@@ -29,73 +31,112 @@ object Packets {
         .filter(_.isDefined)
         .map(_.get)
         .cache()
-    val ddosDataset = recordDataset.filter(_.isDDoS)
-    val legitDataset = recordDataset.filter(!_.isDDoS)
-    val extractors: Seq[Record => Long] = Seq(_.packets, _.bytes, _.sourceBytes, _.destinationBytes)
+    val ddosDataset = recordDataset.filter(_.isDDoS).cache()
+    val legitDataset = recordDataset.filter(!_.isDDoS).cache()
 
-    val ddosResults = getStatistics(sc, ddosDataset, extractors)
-    val legitResults = getStatistics(sc, legitDataset, extractors)
+    val packetsDDoS = ddosDataset.map(_.packets)
+    val packetsLegit = legitDataset.map(_.packets)
+    val bytesDDoS = ddosDataset.map(_.bytes)
+    val bytesLegit = legitDataset.map(_.bytes)
+    val rateDDoS = ddosDataset.map(_.rate)
+    val rateLegit = legitDataset.map(_.rate)
+    val bytesRateDDoS = ddosDataset.map(r => r.bytes / r.duration)
+    val bytesRateLegit = legitDataset.map(r => r.bytes / r.duration)
 
-    val ddosRanges =
-      ddosResults
-        .zip(extractors)
-        .map { case (s, e) => countGaussianRange(sc, ddosDataset.map(e), s.mean - 3 * s.stdDev, s.mean + 3 * s.stdDev) }
-    val legitRanges =
-      legitResults
-        .zip(extractors)
-        .map { case (s, e) =>
-          countGaussianRange(sc, legitDataset.map(e), s.mean - 3 * s.stdDev, s.mean + 3 * s.stdDev)
-        }
+    val packetQuartileDDoS = getStatistics(packetsDDoS)
+    val packetQuartileLegit = getStatistics(packetsLegit)
+    val bytesQuartileDDoS = getStatistics(bytesDDoS)
+    val bytesQuartileLegit = getStatistics(bytesLegit)
+    val rateQuartileDDoS = getStatistics(rateDDoS)
+    val rateQuartileLegit = getStatistics(rateLegit)
+    val bytesRateQuartileDDoS = getStatistics(bytesRateDDoS)
+    val bytesRateQuartileLegit = getStatistics(bytesRateLegit)
 
-    showApproximationPlot(ddosResults.head, ddosDataset, extractors.head, "packets-stats", "packets")
-    showApproximationPlot(ddosResults(1), ddosDataset, extractors(1), "bytes-stats", "bytes")
-    showApproximationPlot(ddosResults(2), ddosDataset, extractors(2), "source-bytes-stats", "source bytes")
-    showApproximationPlot(ddosResults(3), ddosDataset, extractors(3), "dest-bytes-stats", "destination bytes")
+    val packetDDoSGaussian = getGaussian(sc, cleanByIQR(sc, packetsDDoS, packetQuartileDDoS))
+    val packetLegitGaussian = getGaussian(sc, cleanByIQR(sc, packetsLegit, packetQuartileLegit))
+    val bytesQuartileDDoSGaussian = getGaussian(sc, cleanByIQR(sc, bytesDDoS, bytesQuartileDDoS))
+    val bytesQuartileLegitGaussian = getGaussian(sc, cleanByIQR(sc, bytesLegit, bytesQuartileLegit))
+    val rateDDoSGaussian = getGaussian(sc, cleanByIQR(sc, rateDDoS, rateQuartileDDoS))
+    val rateLegitGaussian = getGaussian(sc, cleanByIQR(sc, rateLegit, rateQuartileLegit))
+    val bytesRateDDoSGaussian = getGaussian(sc, cleanByIQR(sc, bytesRateDDoS, bytesRateQuartileDDoS))
+    val bytesRateLegitGaussian = getGaussian(sc, cleanByIQR(sc, bytesRateLegit, bytesRateQuartileLegit))
 
-    showApproximationPlot(legitResults.head, legitDataset, extractors.head, "packets-stats", "packets")
-    showApproximationPlot(legitResults(1), legitDataset, extractors(1), "bytes-stats", "bytes")
-    showApproximationPlot(legitResults(2), legitDataset, extractors(2), "source-bytes-stats", "source bytes")
-    showApproximationPlot(legitResults(3), legitDataset, extractors(3), "destination-bytes-stats", "destination bytes")
-
-    showDifferencePlot(ddosResults.head, legitResults.head, "packets-diff", "packets")
-    showDifferencePlot(ddosResults(1), legitResults(1), "bytes-diff", "bytes")
-    showDifferencePlot(ddosResults(2), legitResults(2), "source-bytes-diff", "source bytes")
-    showDifferencePlot(ddosResults(3), legitResults(3), "destination-bytes-diff", "destination bytes")
+    showPlot(
+      packetDDoSGaussian,
+      packetLegitGaussian,
+      packetQuartileDDoS,
+      packetQuartileLegit,
+      "packets",
+      "packets",
+    )
+    showPlot(
+      bytesQuartileDDoSGaussian,
+      bytesQuartileLegitGaussian,
+      bytesQuartileDDoS,
+      bytesQuartileLegit,
+      "bytes",
+      "bytes",
+    )
+    showPlot(
+      rateDDoSGaussian,
+      rateLegitGaussian,
+      rateQuartileDDoS,
+      rateQuartileLegit,
+      "rates",
+      "rates",
+    )
+    showPlot(
+      bytesRateDDoSGaussian,
+      bytesRateLegitGaussian,
+      bytesRateQuartileDDoS,
+      bytesRateQuartileLegit,
+      "bytesRate",
+      "bytesRate",
+    )
   }
 
-  def showDifferencePlot(
-      statsDDoS: DoubleStatistics,
-      statsLegit: DoubleStatistics,
+  def showPlot[T: Numeric](
+      gaussianDDoS: Gaussian,
+      gaussianLegit: Gaussian,
+      quartilesDDoS: Quartiles[T],
+      quartilesLegit: Quartiles[T],
       filename: String,
       variableName: String,
   ): Unit = {
     val file = new File(s"images/$filename.png")
     file.createNewFile()
+
+    println(s"""
+      | DDoS 
+      | \tMin: ${quartilesDDoS.min}
+      | \tlower: ${quartilesDDoS.firstQuartile
+        .toDouble() - 1.5 * (quartilesDDoS.thirdQuartile - quartilesDDoS.firstQuartile).toDouble()}
+      | \tFirst Quartile: ${quartilesDDoS.firstQuartile}
+      | \tMedian: ${quartilesDDoS.secondQuartile}
+      | \tThird Quartile: ${quartilesDDoS.thirdQuartile}
+      | \tUpper: ${quartilesDDoS.thirdQuartile
+        .toDouble() + 1.5 * (quartilesDDoS.thirdQuartile - quartilesDDoS.firstQuartile).toDouble()}
+      | \tMax: ${quartilesDDoS.max}
+      """.stripMargin)
+
+    println(s"""
+               | Legit 
+               | \tMin: ${quartilesLegit.min}
+               | \tlower: ${quartilesLegit.firstQuartile
+        .toDouble() - 1.5 * (quartilesLegit.thirdQuartile - quartilesLegit.firstQuartile).toDouble()}
+               | \tFirst Quartile: ${quartilesLegit.firstQuartile}
+               | \tMedian: ${quartilesLegit.secondQuartile}
+               | \tThird Quartile: ${quartilesLegit.thirdQuartile}
+               | \tUpper: ${quartilesLegit.thirdQuartile
+        .toDouble() + 1.5 * (quartilesLegit.thirdQuartile - quartilesLegit.firstQuartile).toDouble()}
+               | \tMax: ${quartilesLegit.max}
+      """.stripMargin)
+
     Overlay(
-      FunctionPlot(gaussian(statsDDoS.mean, statsDDoS.stdDev)),
-      FunctionPlot(gaussian(statsLegit.mean, statsLegit.stdDev)),
+      FunctionPlot(gaussian(gaussianDDoS.mean, gaussianDDoS.stdDev)),
+      FunctionPlot(gaussian(gaussianLegit.mean, gaussianLegit.stdDev)),
     )
       .title(s"Difference in distribution between DDoS and legit $variableName")
-      .standard()
-      .render()
-      .write(file)
-  }
-
-  def showApproximationPlot(
-      stats: DoubleStatistics,
-      dataset: RDD[Record],
-      extractor: Record => Long,
-      filename: String,
-      variableName: String,
-  ): Unit = {
-    val ddosHistogram = dataset.map(extractor).histogram(100)
-    val file = new File(s"images/$filename.png")
-    file.createNewFile()
-    Overlay(
-      FunctionPlot(gaussian(stats.mean, stats.stdDev)),
-      BarChart(ddosHistogram._2.map(_.toDouble)).standard(xLabels = ddosHistogram._2.map(_.toString)),
-    )
-      .title(s"Correctness of approximation of value distribution for $variableName variable")
       .standard()
       .render()
       .write(file)
@@ -104,35 +145,40 @@ object Packets {
   def gaussian(avg: Double, stdDev: Double)(x: Double): Double =
     1 / (stdDev * math.sqrt(2 * math.Pi)) * math.exp(-0.5 * math.pow(x - avg, 2) / math.pow(stdDev, 2))
 
-  def getStatistics(
-      sc: SparkContext,
-      dataset: RDD[Record],
-      extractors: Seq[Record => Long],
-  ): Seq[DoubleStatistics] = {
-    val results =
-      dataset
-        .map(r => extractors.map(_.apply(r)).map(v => (v, v, v, 1)))
-        .reduce((s1, s2) =>
-          s1.zip(s2).map { case ((min1, max1, avg1, count1), (min2, max2, avg2, count2)) =>
-            (min1 min min2, max1 max max2, avg1 + avg2, count1 + count2)
-          },
-        )
+  def getStatistics[T: Numeric: Ordering: ClassTag](
+      dataset: RDD[T],
+  ): Quartiles[T] = {
+    val size = dataset.count()
+    val quartiles = dataset
+      .sortBy(v => v)
+      .zipWithIndex()
+      .filter { case (_, index) =>
+        index == 0 || index == size / 4 || index == size / 2 || index == size * 3 / 4 || index == size - 1
+      }
+      .collect()
 
-    val means = results.map(v => v._3 / v._4.toDouble)
-    val meansBroadcast = sc.broadcast(means)
-
-    val stdDevs =
-      dataset
-        .map(r =>
-          extractors.map(_.apply(r)).zip(meansBroadcast.value).map { case (value, mean) => Math.pow(value - mean, 2) },
-        )
-        .reduce((s1, s2) => s1.zip(s2).map(t => t._1 + t._2))
-        .zip(results.map(_._4))
-        .map(t => Math.sqrt(t._1 / t._2))
-
-    results.zip(means).zip(stdDevs).map { case (((min, max, _, _), mean), stdDev) =>
-      DoubleStatistics(min, max, mean, stdDev)
+    quartiles.sortBy(_._2).map(_._1) match {
+      case Array(min, first, second, third, max) => Quartiles(min, first, second, third, max)
     }
+  }
+
+  def getGaussian[T: Numeric](sc: SparkContext, rdd: RDD[T]): Gaussian = {
+    val (sum, count) = rdd.map(r => (r, 1)).reduce(_ + _)
+    val mean = sum.toDouble() / count
+    val meanBroadcast = sc.broadcast(mean)
+
+    val stdDev = math.sqrt(rdd.map(r => math.pow(r.toDouble() - meanBroadcast.value, 2)).sum() / count)
+    Gaussian(mean, stdDev)
+  }
+
+  def cleanByIQR[T: Numeric: Ordering](sc: SparkContext, rdd: RDD[T], quartiles: Quartiles[T]): RDD[T] = {
+    val rangeBroadcast = sc.broadcast(
+      (
+        quartiles.firstQuartile.toDouble() - 1.5 * (quartiles.thirdQuartile - quartiles.firstQuartile).toDouble(),
+        quartiles.thirdQuartile.toDouble() + 1.5 * (quartiles.thirdQuartile - quartiles.firstQuartile).toDouble(),
+      ),
+    )
+    rdd.filter(r => r.toDouble() > rangeBroadcast.value._1 && r.toDouble() < rangeBroadcast.value._2)
   }
 
   /**

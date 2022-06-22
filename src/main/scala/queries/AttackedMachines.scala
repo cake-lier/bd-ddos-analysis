@@ -31,7 +31,7 @@ object AttackedMachines {
 
     val mostDDoSIPs = recordDataset
       .filter(_.isDDoS)
-      .map(r => (r.destinationAddress, r.destinationBytes))
+      .map(r => (r.destinationAddress, r.bytes))
       .reduceByKey(_ + _)
       .map { case (ip, traffic) => (ip, traffic / 1024.toDouble) }
       .sortBy(_._2, ascending = false)
@@ -39,7 +39,7 @@ object AttackedMachines {
       .toMap
 
     val mostAttackedIp = recordDataset
-      .map(r => (r.destinationAddress, r.destinationBytes))
+      .map(r => (r.destinationAddress, r.bytes))
       .reduceByKey(_ + _)
       .map { case (ip, traffic) => (ip, traffic / 1024.toDouble) }
       .collect()
