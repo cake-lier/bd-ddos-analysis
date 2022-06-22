@@ -37,7 +37,7 @@ object Basic {
     val ddosPercentage = ddosCount._1 / recordDatasetSize.toDouble * 100
     val legitPercentage = ddosCount._2 / recordDatasetSize.toDouble * 100
 
-    val file = new File("total_pie.png")
+    val file = new File("images/total_pie.png")
     file.createNewFile()
     PieChart(
       Seq(

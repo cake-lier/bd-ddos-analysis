@@ -33,7 +33,7 @@ object TransportProtocol {
     val tcpPercentage = ddosByProtocol("tcp") / ddosByProtocol.values.sum.toDouble * 100
     val udpPercentage = ddosByProtocol("udp") / ddosByProtocol.values.sum.toDouble * 100
 
-    val file = new File("protocol-chart.png")
+    val file = new File("images/protocol-chart.png")
     file.createNewFile()
     PieChart(
       Seq(
