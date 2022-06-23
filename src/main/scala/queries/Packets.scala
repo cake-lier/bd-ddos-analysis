@@ -36,8 +36,8 @@ object Packets {
     val ddosDataset = recordDataset.filter(_.isDDoS).cache()
     val legitDataset = recordDataset.filter(!_.isDDoS).cache()
 
-    val packetsDDoS = ddosDataset.map(_.packets)
-    val packetsLegit = legitDataset.map(_.packets)
+//    val packetsDDoS = ddosDataset.map(_.packets)
+//    val packetsLegit = legitDataset.map(_.packets)
     val bytesDDoS = ddosDataset.map(_.bytes)
     val bytesLegit = legitDataset.map(_.bytes)
     val rateDDoS = ddosDataset.map(_.rate)
@@ -45,8 +45,8 @@ object Packets {
     val bytesRateDDoS = ddosDataset.map(r => r.bytes / r.duration)
     val bytesRateLegit = legitDataset.map(r => r.bytes / r.duration)
 
-    val packetQuartileDDoS = getStatistics(packetsDDoS)
-    val packetQuartileLegit = getStatistics(packetsLegit)
+//    val packetQuartileDDoS = getStatistics(packetsDDoS)
+//    val packetQuartileLegit = getStatistics(packetsLegit)
     val bytesQuartileDDoS = getStatistics(bytesDDoS)
     val bytesQuartileLegit = getStatistics(bytesLegit)
     val rateQuartileDDoS = getStatistics(rateDDoS)
@@ -54,8 +54,8 @@ object Packets {
     val bytesRateQuartileDDoS = getStatistics(bytesRateDDoS)
     val bytesRateQuartileLegit = getStatistics(bytesRateLegit)
 
-    val packetDDoSGaussian = getGaussian(sc, cleanByIQR(sc, packetsDDoS, packetQuartileDDoS))
-    val packetLegitGaussian = getGaussian(sc, cleanByIQR(sc, packetsLegit, packetQuartileLegit))
+//    val packetDDoSGaussian = getGaussian(sc, cleanByIQR(sc, packetsDDoS, packetQuartileDDoS))
+//    val packetLegitGaussian = getGaussian(sc, cleanByIQR(sc, packetsLegit, packetQuartileLegit))
     val bytesQuartileDDoSGaussian = getGaussian(sc, cleanByIQR(sc, bytesDDoS, bytesQuartileDDoS))
     val bytesQuartileLegitGaussian = getGaussian(sc, cleanByIQR(sc, bytesLegit, bytesQuartileLegit))
     val rateDDoSGaussian = getGaussian(sc, cleanByIQR(sc, rateDDoS, rateQuartileDDoS))
@@ -63,14 +63,14 @@ object Packets {
     val bytesRateDDoSGaussian = getGaussian(sc, cleanByIQR(sc, bytesRateDDoS, bytesRateQuartileDDoS))
     val bytesRateLegitGaussian = getGaussian(sc, cleanByIQR(sc, bytesRateLegit, bytesRateQuartileLegit))
 
-    showPlot(
-      packetDDoSGaussian,
-      packetLegitGaussian,
-      packetQuartileDDoS,
-      packetQuartileLegit,
-      "packets",
-      "packets",
-    )
+//    showPlot(
+//      packetDDoSGaussian,
+//      packetLegitGaussian,
+//      packetQuartileDDoS,
+//      packetQuartileLegit,
+//      "packets",
+//      "packets",
+//    )
     showPlot(
       bytesQuartileDDoSGaussian,
       bytesQuartileLegitGaussian,
@@ -105,8 +105,10 @@ object Packets {
       filename: String,
       variableName: String,
   ): Unit = {
-    val file = new File(s"images/$filename.png")
-    file.createNewFile()
+    val ddosFile = new File(s"images/$filename-ddos.png")
+    val legitFile = new File(s"images/$filename-legit.png")
+    ddosFile.createNewFile()
+    legitFile.createNewFile()
 
     println(s"""
       | DDoS 
@@ -134,29 +136,31 @@ object Packets {
                | \tMax: ${quartilesLegit.max}
       """.stripMargin)
 
-    Facets(
-      Seq(
-        Seq(
-          FunctionPlot.series(
-            gaussian(gaussianDDoS.mean, gaussianDDoS.stdDev),
-            "DDoS",
-            HTMLNamedColors.dodgerBlue,
-            Some(Bounds(0, gaussianDDoS.mean + 3 * gaussianDDoS.stdDev)),
-          ),
-          FunctionPlot.series(
-            gaussian(gaussianLegit.mean, gaussianLegit.stdDev),
-            "Legit",
-            HTMLNamedColors.orange,
-            Some(Bounds(0, gaussianLegit.mean + 3 * gaussianLegit.stdDev)),
-          ),
-        ),
-      ),
-    )
-      .title(s"Difference in distribution between DDoS and legit $variableName")
+    FunctionPlot
+      .series(
+        gaussian(gaussianDDoS.mean, gaussianDDoS.stdDev),
+        "DDoS",
+        HTMLNamedColors.dodgerBlue,
+        Some(Bounds(0, gaussianDDoS.mean + 3 * gaussianDDoS.stdDev)),
+      )
+      .title(s"DDoS $variableName distribution")
       .overlayLegend()
       .standard()
       .render()
-      .write(file)
+      .write(ddosFile)
+
+    FunctionPlot
+      .series(
+        gaussian(gaussianLegit.mean, gaussianLegit.stdDev),
+        "Legit",
+        HTMLNamedColors.orange,
+        Some(Bounds(0, gaussianLegit.mean + 3 * gaussianLegit.stdDev)),
+      )
+      .title(s"Legit $variableName distribution")
+      .overlayLegend()
+      .standard()
+      .render()
+      .write(legitFile)
   }
 
   def gaussian(avg: Double, stdDev: Double)(x: Double): Double =
