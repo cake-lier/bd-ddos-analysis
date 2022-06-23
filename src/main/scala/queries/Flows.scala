@@ -49,7 +49,7 @@ object Flows {
     val (ddosPacketsRateSum, ddosBytesRateSum, ddosCount, legitPacketsRateSum, legitBytesRateSum, legitCount) =
       flowsDataset
         .map { case (isDDoS, packetsRate, bytesRate) =>
-          if (isDDoS) (packetsRate, bytesRate, 1, 0, 0, 0) else (0, 0, 0, packetsRate, bytesRate, 1)
+          if (isDDoS) (packetsRate, bytesRate, 1, 0.0, 0.0, 0) else (0.0, 0.0, 0, packetsRate, bytesRate, 1)
         }
         .reduce(_ + _)
 
@@ -70,13 +70,13 @@ object Flows {
             (
               math.pow(packetsRate - ddosPacketsRateMeanBroadcast.value, 2),
               math.pow(bytesRate - ddosBytesRateMeanBroadcast.value, 2),
-              0,
-              0,
+              0.0,
+              0.0,
             )
           else
             (
-              0,
-              0,
+              0.0,
+              0.0,
               math.pow(packetsRate - legitPacketsRateMeanBroadcast.value, 2),
               math.pow(bytesRate - legitBytesRateMeanBroadcast.value, 2),
             )
