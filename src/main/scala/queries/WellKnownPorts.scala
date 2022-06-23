@@ -12,7 +12,7 @@ object WellKnownPorts {
 
   def main(args: Array[String]): Unit = {
     val sc = new SparkContext(new SparkConf().setAppName("WellKnownPorts"))
-    println(s"Application started at http://localhost:20888/proxy/${sc.applicationId}/\n")
+    println(s"Application started at http://localhost:4040/proxy/${sc.applicationId}/\n")
 
     val pathTCPDataset = s"${args(0)}/DDoS_TCP.csv"
     val pathUDPDataset = s"${args(0)}/DDoS_UDP.csv"
