@@ -1,10 +1,17 @@
 package it.unibo.bd
 package queries
 
+import utils.Functions.gaussian
 import utils.Record
 import utils.RichTuples.{ RichTuple4, RichTuple6 }
 
+import com.cibo.evilplot.colors.{ HSLA, HTMLNamedColors }
+import com.cibo.evilplot.numeric.Bounds
+import com.cibo.evilplot.plot.FunctionPlot
+import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
 import org.apache.spark.{ SparkConf, SparkContext }
+
+import java.io.File
 
 object Flows {
 
@@ -81,5 +88,62 @@ object Flows {
     val legitPacketsRateStdDev = math.sqrt(legitPacketsRateDiff / legitCount)
     val legitBytesRateStdDev = math.sqrt(legitBytesRateDiff / legitCount)
 
+    showPlot(
+      ddosPacketsRateMean,
+      ddosPacketsRateStdDev,
+      "ddos-packets-rate",
+      "DDoS",
+      "packets rate",
+      HTMLNamedColors.dodgerBlue,
+    )
+    showPlot(
+      ddosBytesRateMean,
+      ddosBytesRateStdDev,
+      "ddos-bytes-rate",
+      "DDoS",
+      "bytes rate",
+      HTMLNamedColors.dodgerBlue,
+    )
+    showPlot(
+      legitPacketsRateMean,
+      legitPacketsRateStdDev,
+      "legit-packets-rate",
+      "Legit",
+      "packets rate",
+      HTMLNamedColors.orange,
+    )
+    showPlot(
+      legitBytesRateMean,
+      legitBytesRateStdDev,
+      "legit-bytes-rate",
+      "Legit",
+      "bytes rate",
+      HTMLNamedColors.orange,
+    )
+  }
+
+  def showPlot(
+      mean: Double,
+      stdDev: Double,
+      filename: String,
+      categoryName: String,
+      variableName: String,
+      color: HSLA,
+  ): Unit = {
+    val file = new File(s"images/$filename.png")
+    file.createNewFile()
+
+    FunctionPlot
+      .series(
+        gaussian(mean, stdDev),
+        categoryName,
+        color,
+        Some(Bounds(0, mean + 3 * stdDev)),
+      )
+      .title(s"$categoryName $variableName distribution")
+      .overlayLegend()
+      .standard()
+      .render()
+      .write(file)
   }
 }

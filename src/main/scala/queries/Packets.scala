@@ -2,11 +2,12 @@ package it.unibo.bd
 package queries
 
 import utils.{ Gaussian, Quartiles, Record }
+import utils.Functions.gaussian
 import utils.RichTuples.RichTuple2
 
 import com.cibo.evilplot.colors.HTMLNamedColors
 import com.cibo.evilplot.numeric.Bounds
-import com.cibo.evilplot.plot.{ Facets, FunctionPlot, Overlay }
+import com.cibo.evilplot.plot.FunctionPlot
 import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.rdd.RDD
@@ -36,8 +37,8 @@ object Packets {
     val ddosDataset = recordDataset.filter(_.isDDoS).cache()
     val legitDataset = recordDataset.filter(!_.isDDoS).cache()
 
-//    val packetsDDoS = ddosDataset.map(_.packets)
-//    val packetsLegit = legitDataset.map(_.packets)
+    val packetsDDoS = ddosDataset.map(_.packets)
+    val packetsLegit = legitDataset.map(_.packets)
     val bytesDDoS = ddosDataset.map(_.bytes)
     val bytesLegit = legitDataset.map(_.bytes)
     val rateDDoS = ddosDataset.map(_.rate)
@@ -45,8 +46,8 @@ object Packets {
     val bytesRateDDoS = ddosDataset.map(r => r.bytes / r.duration)
     val bytesRateLegit = legitDataset.map(r => r.bytes / r.duration)
 
-//    val packetQuartileDDoS = getStatistics(packetsDDoS)
-//    val packetQuartileLegit = getStatistics(packetsLegit)
+    val packetQuartileDDoS = getStatistics(packetsDDoS)
+    val packetQuartileLegit = getStatistics(packetsLegit)
     val bytesQuartileDDoS = getStatistics(bytesDDoS)
     val bytesQuartileLegit = getStatistics(bytesLegit)
     val rateQuartileDDoS = getStatistics(rateDDoS)
@@ -54,8 +55,8 @@ object Packets {
     val bytesRateQuartileDDoS = getStatistics(bytesRateDDoS)
     val bytesRateQuartileLegit = getStatistics(bytesRateLegit)
 
-//    val packetDDoSGaussian = getGaussian(sc, cleanByIQR(sc, packetsDDoS, packetQuartileDDoS))
-//    val packetLegitGaussian = getGaussian(sc, cleanByIQR(sc, packetsLegit, packetQuartileLegit))
+    val packetDDoSGaussian = getGaussian(sc, cleanByIQR(sc, packetsDDoS, packetQuartileDDoS))
+    val packetLegitGaussian = getGaussian(sc, cleanByIQR(sc, packetsLegit, packetQuartileLegit))
     val bytesQuartileDDoSGaussian = getGaussian(sc, cleanByIQR(sc, bytesDDoS, bytesQuartileDDoS))
     val bytesQuartileLegitGaussian = getGaussian(sc, cleanByIQR(sc, bytesLegit, bytesQuartileLegit))
     val rateDDoSGaussian = getGaussian(sc, cleanByIQR(sc, rateDDoS, rateQuartileDDoS))
@@ -63,14 +64,14 @@ object Packets {
     val bytesRateDDoSGaussian = getGaussian(sc, cleanByIQR(sc, bytesRateDDoS, bytesRateQuartileDDoS))
     val bytesRateLegitGaussian = getGaussian(sc, cleanByIQR(sc, bytesRateLegit, bytesRateQuartileLegit))
 
-//    showPlot(
-//      packetDDoSGaussian,
-//      packetLegitGaussian,
-//      packetQuartileDDoS,
-//      packetQuartileLegit,
-//      "packets",
-//      "packets",
-//    )
+    showPlot(
+      packetDDoSGaussian,
+      packetLegitGaussian,
+      packetQuartileDDoS,
+      packetQuartileLegit,
+      "packets",
+      "packets",
+    )
     showPlot(
       bytesQuartileDDoSGaussian,
       bytesQuartileLegitGaussian,
@@ -163,9 +164,6 @@ object Packets {
       .write(legitFile)
   }
 
-  def gaussian(avg: Double, stdDev: Double)(x: Double): Double =
-    1 / (stdDev * math.sqrt(2 * math.Pi)) * math.exp(-0.5 * math.pow(x - avg, 2) / math.pow(stdDev, 2))
-
   def getStatistics[T: Numeric: Ordering: ClassTag](
       dataset: RDD[T],
   ): Quartiles[T] = {
@@ -200,22 +198,5 @@ object Packets {
       ),
     )
     rdd.filter(r => r.toDouble() > rangeBroadcast.value._1 && r.toDouble() < rangeBroadcast.value._2)
-  }
-
-  /**
-   * Return the number inside the range and outside.
-   * @return
-   */
-  def countGaussianRange(
-      sc: SparkContext,
-      dataset: RDD[Long],
-      lower: Double,
-      upper: Double,
-  ): (Int, Int) = {
-    val upperBroadcast = sc.broadcast(upper)
-    val lowerBroadcast = sc.broadcast(lower)
-    dataset
-      .map(f => if (f > lowerBroadcast.value && f < upperBroadcast.value) (1, 0) else (0, 1))
-      .reduce(_ + _)
   }
 }
