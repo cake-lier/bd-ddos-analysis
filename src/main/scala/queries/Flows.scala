@@ -91,7 +91,7 @@ object Flows {
     showPlot(
       ddosPacketsRateMean,
       ddosPacketsRateStdDev,
-      "ddos-packets-rate",
+      "ddos-flow-packets-rate",
       "DDoS",
       "packets rate",
       HTMLNamedColors.dodgerBlue,
@@ -99,7 +99,7 @@ object Flows {
     showPlot(
       ddosBytesRateMean,
       ddosBytesRateStdDev,
-      "ddos-bytes-rate",
+      "ddos-flow-bytes-rate",
       "DDoS",
       "bytes rate",
       HTMLNamedColors.dodgerBlue,
@@ -107,7 +107,7 @@ object Flows {
     showPlot(
       legitPacketsRateMean,
       legitPacketsRateStdDev,
-      "legit-packets-rate",
+      "legit-flow-packets-rate",
       "Legit",
       "packets rate",
       HTMLNamedColors.orange,
@@ -115,7 +115,7 @@ object Flows {
     showPlot(
       legitBytesRateMean,
       legitBytesRateStdDev,
-      "legit-bytes-rate",
+      "legit-flow-bytes-rate",
       "Legit",
       "bytes rate",
       HTMLNamedColors.orange,
