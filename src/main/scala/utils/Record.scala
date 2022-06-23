@@ -9,7 +9,6 @@ case class Record(
     protocol: String,
     sourceAddress: String,
     sourcePort: Long,
-    direction: String,
     destinationAddress: String,
     destinationPort: Long,
     packets: Long,
@@ -30,7 +29,6 @@ object Record {
       protocol <- if (r(2) == "tcp" || r(2) == "udp") Success(r(2)) else Failure(new IllegalStateException())
       sourceAddress = r(3)
       sourcePort <- Try(r(4).toLong)
-      direction = r(5)
       destinationAddress = r(6)
       destinationPort <- Try(r(7).toLong)
       packets <- Try(r(8).toLong)
@@ -46,7 +44,6 @@ object Record {
       protocol,
       sourceAddress,
       sourcePort,
-      direction,
       destinationAddress,
       destinationPort,
       packets,
