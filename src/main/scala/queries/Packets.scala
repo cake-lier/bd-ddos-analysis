@@ -11,10 +11,10 @@ import com.cibo.evilplot.plot.FunctionPlot
 import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.rdd.RDD
-import spire.ClassTag
 
 import java.io.File
 import scala.math.Numeric.Implicits.infixNumericOps
+import scala.reflect.ClassTag
 
 object Packets {
 

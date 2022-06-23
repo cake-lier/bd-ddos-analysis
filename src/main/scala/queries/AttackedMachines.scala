@@ -47,15 +47,18 @@ object AttackedMachines {
         .collect()
         .toMap
 
-    val totalTrafficOnlyDDos = trafficByIP.filterKeys(ddosTrafficByIP.keySet(_))
-    val a1 = totalTrafficOnlyDDos.toSeq.sortBy(_._1)
-    val a2 = ddosTrafficByIP.toSeq.sortBy(_._1)
+    val totalImportantTraffic = trafficByIP.filterKeys(ddosTrafficByIP.keySet(_))
+    val totalImportantTrafficSorted = totalImportantTraffic.toSeq.sortBy(_._1)
+    val ddosTrafficSorted = ddosTrafficByIP.toSeq.sortBy(_._1)
 
     val file = new File("images/ddos-traffic.png")
     file.createNewFile()
     BarChart
-      .clustered(a1.map(_._2).zip(a2.map(_._2)).map(v => Seq(v._1, v._2)), labels = a1.map(_._1))
-      .standard(a1.map(_._1))
+      .clustered(
+        totalImportantTrafficSorted.map(_._2).zip(ddosTrafficSorted.map(_._2)).map(v => Seq(v._1, v._2)),
+        labels = totalImportantTrafficSorted.map(_._1),
+      )
+      .standard(totalImportantTrafficSorted.map(_._1))
       .xLabel("IP")
       .yLabel("KB")
       .rightLegend(labels = Some(Seq("Total", "DDoS")))
