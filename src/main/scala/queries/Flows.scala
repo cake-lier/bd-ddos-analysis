@@ -34,6 +34,7 @@ object Flows {
 
     val flowsDataset =
       recordDataset
+        .filter(_.duration > 0.0)
         .map(r =>
           (
             (r.sourceAddress, r.sourcePort, r.destinationAddress, r.destinationPort, r.protocol),
@@ -57,6 +58,11 @@ object Flows {
     val ddosBytesRateMean = ddosBytesRateSum / ddosCount
     val legitPacketsRateMean = legitPacketsRateSum / legitCount
     val legitBytesRateMean = legitBytesRateSum / legitCount
+
+    println(s"ddosPacketsRateMean: $ddosPacketsRateMean")
+    println(s"ddosBytesRateMean: $ddosBytesRateMean")
+    println(s"legitPacketsRateMean: $legitPacketsRateMean")
+    println(s"legitBytesRateMean: $legitBytesRateMean")
 
     val ddosPacketsRateMeanBroadcast = sc.broadcast(ddosPacketsRateMean)
     val ddosBytesRateMeanBroadcast = sc.broadcast(ddosBytesRateMean)
@@ -87,6 +93,11 @@ object Flows {
     val ddosBytesRateStdDev = math.sqrt(ddosBytesRateDiff / ddosCount)
     val legitPacketsRateStdDev = math.sqrt(legitPacketsRateDiff / legitCount)
     val legitBytesRateStdDev = math.sqrt(legitBytesRateDiff / legitCount)
+
+    println(s"DDoS packets rate stdDev: $ddosPacketsRateStdDev")
+    println(s"DDoS packets bytes rate stdDev: $ddosBytesRateStdDev")
+    println(s"Legit packets rate stdDev: $legitPacketsRateStdDev")
+    println(s"Legit bytes packets rate stdDev: $legitBytesRateStdDev")
 
     showPlot(
       ddosPacketsRateMean,
