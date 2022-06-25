@@ -27,7 +27,6 @@ object WellKnownPorts {
         .map(Record(_))
         .filter(_.isDefined)
         .map(_.get)
-        .cache()
 
     val portsDataset = ports
       .map(_.replace("\"", ""))

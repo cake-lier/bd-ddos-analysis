@@ -8,6 +8,8 @@ import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
 import org.apache.spark.{ SparkConf, SparkContext }
 import utils.RichTuples.RichTuple2
 
+import org.apache.spark.storage.StorageLevel
+
 import java.io.File
 
 object Basic {
@@ -27,7 +29,7 @@ object Basic {
         .map(Record(_))
         .filter(_.isDefined)
         .map(_.get)
-        .cache()
+        .persist(StorageLevel.MEMORY_AND_DISK)
 
     val recordDatasetSize = recordDataset.count()
     val ddosCount =

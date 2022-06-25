@@ -11,6 +11,7 @@ import com.cibo.evilplot.plot.FunctionPlot
 import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 
 import java.io.File
 import scala.math.Numeric.Implicits.infixNumericOps
@@ -33,9 +34,10 @@ object Packets {
         .map(Record(_))
         .filter(_.isDefined)
         .map(_.get)
-        .cache()
-    val ddosDataset = recordDataset.filter(_.isDDoS).cache()
-    val legitDataset = recordDataset.filter(!_.isDDoS).cache()
+        .persist(StorageLevel.MEMORY_AND_DISK)
+
+    val ddosDataset = recordDataset.filter(_.isDDoS)
+    val legitDataset = recordDataset.filter(!_.isDDoS)
 
     val packetsDDoS = ddosDataset.map(_.packets)
     val packetsLegit = legitDataset.map(_.packets)

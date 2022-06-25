@@ -4,6 +4,7 @@ package queries
 import utils.Record
 
 import org.apache.spark.{ SparkConf, SparkContext }
+import org.apache.spark.storage.StorageLevel
 
 import java.time.LocalDateTime
 
@@ -24,7 +25,6 @@ object Time {
         .map(Record(_))
         .filter(_.isDefined)
         .map(_.get)
-        .cache()
 
     val minMaxDate =
       recordDataset

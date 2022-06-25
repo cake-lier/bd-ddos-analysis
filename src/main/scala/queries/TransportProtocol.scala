@@ -26,7 +26,6 @@ object TransportProtocol {
         .map(Record(_))
         .filter(_.isDefined)
         .map(_.get)
-        .cache()
 
     val ddosByProtocol = recordDataset.filter(_.isDDoS).map(_.protocol).countByValue()
 

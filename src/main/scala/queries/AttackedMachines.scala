@@ -6,6 +6,7 @@ import utils.Record
 import com.cibo.evilplot.plot.BarChart
 import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
 import org.apache.spark.{ SparkConf, SparkContext }
+import org.apache.spark.storage.StorageLevel
 
 import java.io.File
 
@@ -27,14 +28,14 @@ object AttackedMachines {
         .map(Record(_))
         .filter(_.isDefined)
         .map(_.get)
-        .cache()
+        .persist(StorageLevel.MEMORY_AND_DISK)
 
     val ddosTrafficByIP =
       recordDataset
         .filter(_.isDDoS)
         .map(r => (r.destinationAddress, r.bytes))
         .reduceByKey(_ + _)
-        .map { case (ip, traffic) => (ip, traffic / 1024.toDouble) }
+        .map { case (ip, traffic) => (ip, traffic / 1024.0) }
         .sortBy(_._2, ascending = false)
         .take(5)
         .toMap
@@ -43,7 +44,7 @@ object AttackedMachines {
       recordDataset
         .map(r => (r.destinationAddress, r.bytes))
         .reduceByKey(_ + _)
-        .map { case (ip, traffic) => (ip, traffic / 1024.toDouble) }
+        .map { case (ip, traffic) => (ip, traffic / 1024.0) }
         .collect()
         .toMap
 

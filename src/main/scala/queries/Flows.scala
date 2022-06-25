@@ -10,6 +10,7 @@ import com.cibo.evilplot.numeric.Bounds
 import com.cibo.evilplot.plot.FunctionPlot
 import com.cibo.evilplot.plot.aesthetics.DefaultTheme.defaultTheme
 import org.apache.spark.{ SparkConf, SparkContext }
+import org.apache.spark.storage.StorageLevel
 
 import java.io.File
 
@@ -30,7 +31,7 @@ object Flows {
         .map(Record(_))
         .filter(_.isDefined)
         .map(_.get)
-        .cache()
+        .persist(StorageLevel.MEMORY_AND_DISK)
 
     val flowsDataset =
       recordDataset
@@ -45,7 +46,7 @@ object Flows {
           (isDDoS1 || isDDoS2, duration1 + duration2, packets1 + packets2, bytes1 + bytes2)
         }
         .map { case (_, (isDDoS, duration, packets, bytes)) => (isDDoS, packets / duration, bytes / duration) }
-        .cache()
+        .persist(StorageLevel.MEMORY_AND_DISK)
 
     val (ddosPacketsRateSum, ddosBytesRateSum, ddosCount, legitPacketsRateSum, legitBytesRateSum, legitCount) =
       flowsDataset
@@ -58,11 +59,6 @@ object Flows {
     val ddosBytesRateMean = ddosBytesRateSum / ddosCount
     val legitPacketsRateMean = legitPacketsRateSum / legitCount
     val legitBytesRateMean = legitBytesRateSum / legitCount
-
-    println(s"ddosPacketsRateMean: $ddosPacketsRateMean")
-    println(s"ddosBytesRateMean: $ddosBytesRateMean")
-    println(s"legitPacketsRateMean: $legitPacketsRateMean")
-    println(s"legitBytesRateMean: $legitBytesRateMean")
 
     val ddosPacketsRateMeanBroadcast = sc.broadcast(ddosPacketsRateMean)
     val ddosBytesRateMeanBroadcast = sc.broadcast(ddosBytesRateMean)
@@ -93,11 +89,6 @@ object Flows {
     val ddosBytesRateStdDev = math.sqrt(ddosBytesRateDiff / ddosCount)
     val legitPacketsRateStdDev = math.sqrt(legitPacketsRateDiff / legitCount)
     val legitBytesRateStdDev = math.sqrt(legitBytesRateDiff / legitCount)
-
-    println(s"DDoS packets rate stdDev: $ddosPacketsRateStdDev")
-    println(s"DDoS packets bytes rate stdDev: $ddosBytesRateStdDev")
-    println(s"Legit packets rate stdDev: $legitPacketsRateStdDev")
-    println(s"Legit bytes packets rate stdDev: $legitBytesRateStdDev")
 
     showPlot(
       ddosPacketsRateMean,
