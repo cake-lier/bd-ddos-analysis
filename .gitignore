@@ -112,3 +112,4 @@ hs_err_pid*
 aws_config.conf
 remote_command.txt
 local_command.txt
+aws_credentials.txt

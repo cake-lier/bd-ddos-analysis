@@ -1,6 +1,7 @@
 package it.unibo.bd
 package queries
 
+import utils.Metric.checkDDoS
 import utils.Record
 
 import org.apache.spark.{ SparkConf, SparkContext }
@@ -55,7 +56,7 @@ object Analysis {
               ) =>
             (
               isDDoS,
-              metric(
+              checkDDoS(
                 destinationPort,
                 destinationAddress,
                 packets,
@@ -64,7 +65,7 @@ object Analysis {
                 byteRate,
                 flowRate,
                 flowByteRate,
-              ) >= 0.01,
+              ),
             )
         }
         .map { case (actual, predicted) =>
@@ -86,23 +87,4 @@ object Analysis {
     println(f"| Predicted positive | ${metricDataset._1._1.toString}%-17s | ${metricDataset._1._2.toString}%-17s |")
     println(f"| Predicted negative | ${metricDataset._2._2.toString}%-17s | ${metricDataset._2._1.toString}%-17s |")
   }
-
-  def metric(
-      destinationPort: Long,
-      destinationAddress: String,
-      packets: Long,
-      bytes: Long,
-      rate: Double,
-      byteRate: Double,
-      flowRate: Double,
-      flowByteRate: Double,
-  ): Double =
-    ((if (destinationPort == 80L) 1 else 0) +
-      (if (Set("192.168.100.3", "192.168.100.6", "192.168.100.7")(destinationAddress)) 1 else 0) +
-      (1 - math.min(math.abs(packets - 5.909105626202674) / (3 * 3.2784993361685184), 1.0)) +
-      (1 - math.min(math.abs(bytes - 529.8851801659653) / (3 * 240.0539442965255), 1.0)) +
-      (1 - math.min(math.abs(rate - 0.27486262284753876) / (3 * 0.18712897621757338), 1.0)) +
-      (1 - math.min(math.abs(byteRate - 33.86546680087338) / (3 * 17.010164888097375), 1.0)) +
-      (1 - math.min(math.abs(flowRate - 0.27403419840566284) / (3 * 0.15597820418003489), 1.0)) +
-      (1 - math.min(math.abs(flowByteRate - 26.483191236399332) / (3 * 14.608112880857705), 1.0))) / 8
 }
