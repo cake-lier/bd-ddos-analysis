@@ -21,7 +21,7 @@ object App {
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.fast.upload.buffer", "bytebuffer")
     spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", lines.head)
     spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", lines(1))
-    app(spark.sparkContext, args(1), args(2).toInt, args(3))
+    app(spark.sparkContext, args(0), args(1).toInt, args(2))
   }
 
   def app(sc: SparkContext, host: String, port: Int, path: String): Unit = {
