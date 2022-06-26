@@ -95,8 +95,8 @@ No significative results were found.
 
 |                    | Actually positive | Actually negative |
 |--------------------|-------------------|-------------------|
-| Predicted positive | 38266739          | 1259              |
-| Predicted negative | 264165            | 0                 |
+| Predicted positive | 38270702          | 0                 |
+| Predicted negative | 260202            | 1259              |
 
 
 ### Metric
@@ -123,4 +123,4 @@ def metric(
     ) / 8
 ```
 
-The cut-off for the metric value is 0.01.
+The cut-off for the metric value is 0.5.
