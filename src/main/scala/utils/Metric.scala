@@ -32,5 +32,5 @@ object Metric {
       flowRate: Double,
       flowByteRate: Double,
   ): Boolean =
-    metric(destinationPort, destinationAddress, packets, bytes, rate, byteRate, flowRate, flowByteRate) > 0.01
+    metric(destinationPort, destinationAddress, packets, bytes, rate, byteRate, flowRate, flowByteRate) > 0.5
 }
