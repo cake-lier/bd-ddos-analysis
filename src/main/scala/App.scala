@@ -24,6 +24,10 @@ object App {
     app(spark.sparkContext, args(0), args(1).toInt, args(2))
   }
 
+  /* For "packets", "bytes", and "duration" variables only the last value is kept because the analysis is thought to be
+   * checking the instantaneous value of their distribution. An alternative is to keep the sum of the values for all the
+   * records in the window.
+   */
   def app(sc: SparkContext, host: String, port: Int, path: String): Unit = {
     def updateFunction(
         newValues: Seq[(Long, Long, Double, Double)],
