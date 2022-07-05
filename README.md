@@ -177,8 +177,8 @@ No significative results were found.
 
 |                    | Actually positive | Actually negative |
 |--------------------|-------------------|-------------------|
-| Predicted positive | 38270702          | 0                 |
-| Predicted negative | 260202            | 1259              |
+| Predicted positive | 38288961          | 0                 |
+| Predicted negative | 241943            | 1259              |
 
 
 ### Metric
@@ -195,7 +195,7 @@ def metric(
     flowByteRate: Double
 ): Double =
     ((if (destinationPort == 80L) 1 else 0) +
-     (if (Set("192.168.100.3", "192.168.100.6", "192.168.100.7")(destinationAddress)) 1 else 0) +
+     (if (Set("192.168.100.3", "192.168.100.6", "192.168.100.7", "192.168.100.5")(destinationAddress)) 1 else 0) +
      (1 - math.min(math.abs(packets - 5.909105626202674) / (3 * 3.2784993361685184), 1.0)) +
      (1 - math.min(math.abs(bytes - 529.8851801659653) / (3 * 240.0539442965255), 1.0)) +
      (1 - math.min(math.abs(rate - 0.27486262284753876) / (3 * 0.18712897621757338), 1.0)) + 
