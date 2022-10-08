@@ -1,6 +1,6 @@
 ThisBuild / version := "0.1.0"
 
-ThisBuild / scalaVersion := "2.13.9"
+ThisBuild / scalaVersion := "2.13.10"
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
