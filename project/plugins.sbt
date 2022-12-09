@@ -1,5 +1,5 @@
 addSbtPlugin("org.jetbrains.scala" % "sbt-ide-settings" % "1.1.1")
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.0.0")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.1.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
 addSbtPlugin("it.nicolasfarabegoli" % "sbt-conventional-commits" % "2.3.0")
 addSbtPlugin("io.github.cake-lier" % "sbt-remote-deploy" % "2.0.0")
