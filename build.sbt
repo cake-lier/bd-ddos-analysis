@@ -23,7 +23,7 @@ lazy val root = project
     assembly / assemblyJarName := "main.jar",
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-core" % "3.3.2" % Provided,
-      "org.apache.spark" %% "spark-sql" % "3.3.1" % Provided,
+      "org.apache.spark" %% "spark-sql" % "3.3.2" % Provided,
       "org.apache.spark" %% "spark-streaming" % "3.3.1" % Provided,
       "io.github.cibotech" %% "evilplot" % "0.8.1",
     ),
