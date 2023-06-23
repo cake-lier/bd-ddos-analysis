@@ -22,7 +22,7 @@ lazy val root = project
     assembly / mainClass := Some("it.unibo.bd.FlowDuration"),
     assembly / assemblyJarName := "main.jar",
     libraryDependencies ++= Seq(
-      "org.apache.spark" %% "spark-core" % "3.4.0" % Provided,
+      "org.apache.spark" %% "spark-core" % "3.4.1" % Provided,
       "org.apache.spark" %% "spark-sql" % "3.4.0" % Provided,
       "org.apache.spark" %% "spark-streaming" % "3.4.0" % Provided,
       "io.github.cibotech" %% "evilplot" % "0.9.0",
