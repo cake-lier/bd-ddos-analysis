@@ -24,7 +24,7 @@ lazy val root = project
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-core" % "3.4.1" % Provided,
       "org.apache.spark" %% "spark-sql" % "3.4.1" % Provided,
-      "org.apache.spark" %% "spark-streaming" % "3.4.0" % Provided,
+      "org.apache.spark" %% "spark-streaming" % "3.4.1" % Provided,
       "io.github.cibotech" %% "evilplot" % "0.9.0",
     ),
     Global / onLoad := {
